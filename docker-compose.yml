@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  honeypot-gateway:
+    build: ./honeypotx
+    container_name: trespassing-gateway
+    ports:
+      - "8080:80"
+    networks:
+      - edge-net
+    restart: always
+
+  sandbox-runner:
+    build: ./sandbox_api
+    container_name: trespassing-sandbox
+    networks:
+      - isolated-net
+    security_opt:
+      - no-new-privileges:true
+      # Mask sensitive host/kernel files to prevent environmental fingerprinting
+      - mask=/proc/kcore:/proc/keys:/proc/timer_list:/sys/firmware:/proc/acpi
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+
+networks:
+  edge-net:
+    driver: bridge
+  isolated-net:
+    internal: true
+    
